@@ -1,6 +1,6 @@
 package com.supermarket.food_test.services;
 
-import com.supermarket.food_test.dtos.FoodDTO;
+import com.supermarket.food_test.dtos.input.FoodDto;
 import com.supermarket.food_test.models.Food;
 import com.supermarket.food_test.repositories.FoodRepository;
 import org.springframework.beans.BeanUtils;
@@ -25,7 +25,7 @@ public class FoodService {
         return food.orElse(null);
     }
 
-    public Food postFood(FoodDTO foodDTO){
+    public Food postFood(FoodDto foodDTO){
         if(foodDTO.name().isBlank() || foodDTO.price() == null || foodDTO.price() == 0 || foodDTO.type() == null || foodDTO.url().isBlank()){
             return null;
         }else {
@@ -36,7 +36,7 @@ public class FoodService {
         }
     }
 
-    public Food putFood(FoodDTO foodDTO, Long id) {
+    public Food putFood(FoodDto foodDTO, Long id) {
         if (foodDTO.name().isBlank() || foodDTO.price() == null || foodDTO.price() == 0 || foodDTO.type() == null || foodDTO.url().isBlank()) {
             return null;
         }else{

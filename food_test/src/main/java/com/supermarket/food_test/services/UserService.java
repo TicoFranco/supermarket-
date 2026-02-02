@@ -1,21 +1,24 @@
 package com.supermarket.food_test.services;
 
-import com.supermarket.food_test.dtos.LoginDTO;
-import com.supermarket.food_test.dtos.OrderDTO;
-import com.supermarket.food_test.dtos.UserDTO;
+import com.supermarket.food_test.dtos.input.LoginDto;
+import com.supermarket.food_test.dtos.input.OrderDto;
+import com.supermarket.food_test.dtos.input.OrderItemDto;
+import com.supermarket.food_test.dtos.input.UserInputDto;
+import com.supermarket.food_test.dtos.output.OrderOutputDto;
+import com.supermarket.food_test.dtos.output.OrdersOutputPurchaseDto;
 import com.supermarket.food_test.models.Food;
 import com.supermarket.food_test.models.Order;
+import com.supermarket.food_test.models.Purchase;
 import com.supermarket.food_test.models.User;
 import com.supermarket.food_test.repositories.OrderRepository;
+import com.supermarket.food_test.repositories.PurchaseRepository;
 import com.supermarket.food_test.repositories.UserRepository;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -26,21 +29,24 @@ public class UserService {
     private  FoodService foodService;
     @Autowired
     private OrderRepository orderRepository;
+    @Autowired
+    private PurchaseRepository purchaseRepository;
     private final PasswordEncoder passwordEncoder;
+
 
     public UserService(){
         passwordEncoder = new BCryptPasswordEncoder();
     }
 
-    public User postUser(UserDTO userDTO){
-        String password = passwordEncoder.encode(userDTO.password());
+    public User postUser(UserInputDto userInputDto){
+        String password = passwordEncoder.encode(userInputDto.password());
         var aux = new User();
-        aux.setEmail(userDTO.email());
+        aux.setEmail(userInputDto.email());
         aux.setPassword(password);
-        aux.setFirstName(userDTO.firstName());
-        aux.setLastName(userDTO.lastName());
-        aux.setAddress(userDTO.address());
-        aux.setUserRole(userDTO.userRole());
+        aux.setFirstName(userInputDto.firstName());
+        aux.setLastName(userInputDto.lastName());
+        aux.setAddress(userInputDto.address());
+        aux.setUserRole(userInputDto.userRole());
         //BeanUtils.copyProperties(userDTO,aux);
         //aux.setPassword(password);
         userRepository.save(aux);
@@ -63,15 +69,15 @@ public class UserService {
         return passwordEncoder.matches(password,user.getPassword());
     }
 
-    public User putUser(UserDTO userDTO){
-        Optional<User> user = findByEmail(userDTO.email());
+    public User putUser(UserInputDto userInputDto){
+        Optional<User> user = findByEmail(userInputDto.email());
 
         if(user.isPresent()){
-            String password = passwordEncoder.encode(userDTO.password());
+            String password = passwordEncoder.encode(userInputDto.password());
             var aux = user.get();
-            aux.setFirstName(userDTO.firstName());
-            aux.setLastName(userDTO.lastName());
-            aux.setAddress(userDTO.address());
+            aux.setFirstName(userInputDto.firstName());
+            aux.setLastName(userInputDto.lastName());
+            aux.setAddress(userInputDto.address());
             aux.setPassword(password);
             userRepository.save(aux);
             return aux;
@@ -80,7 +86,7 @@ public class UserService {
         return null;
     }
 
-    public boolean deleteUser(LoginDTO loginDTO){
+    public boolean deleteUser(LoginDto loginDTO){
         Optional<User> user = findByEmail(loginDTO.email());
         if(user.isPresent() && user.get().getUserRole().equals("USER")){
             userRepository.delete(user.get());
@@ -91,26 +97,55 @@ public class UserService {
     }
 
 
-    public Order postOrder(OrderDTO orderDTO){
+    public Order postOrder(OrderDto orderDTO){
         boolean listNotStructured = orderDTO.items().stream().
-                map(item-> foodService.findByName(item.name())).anyMatch(Optional::isEmpty);
+                map(item-> foodService.findById(item.id())).anyMatch(Objects::isNull);
 
-        Optional<User> user = findByEmail(orderDTO.user().email());
+        Optional<User> user = findByEmail(orderDTO.email());
 
-        if(listNotStructured || user.isEmpty()){
+        if(listNotStructured || user.isEmpty() || orderDTO.items().isEmpty()){
             return null;
         }
 
-        Set<Food> items = orderDTO.items().stream()
-                .map(item -> foodService.findByName(item.name()).get())
-                .collect(Collectors.toSet());
+        Order order = new Order(user.get(),new Date());
+        Set<Purchase> items = new HashSet<>();
 
-        Order order = new Order(items,user.get(),new Date());
+        for (OrderItemDto itemDTO : orderDTO.items()) {
+            Food food = foodService.findById(itemDTO.id());
+            if(items.stream().noneMatch(item -> item.getFoodName().equals(food.getName()))){
+                Purchase purchase = new Purchase(order,food,itemDTO.count());
+                items.add(purchase);
+            }
+        }
+
+        order.setItems(items);
         user.get().addOrder(order);
         orderRepository.save(order);
         userRepository.save(user.get());
 
         return order;
+    }
+
+    public List<OrderOutputDto> getOrdersByEmail(User user){
+        List<Order> orders = orderRepository.ordersByUser(user.getId());
+        if(orders.isEmpty()){
+            return null;
+        }
+        List<OrderOutputDto> output = new ArrayList<>();
+        orders.forEach(order -> {
+            List<Purchase> purchases = purchaseRepository.purchasesByOrder(order.getId());
+            List<OrdersOutputPurchaseDto> purchasesOutput = new ArrayList<>();
+            purchases.forEach(purchase ->
+                purchasesOutput.add(new OrdersOutputPurchaseDto(purchase.getFoodName(),
+                        purchase.getQuantity(),
+                        purchase.getValue(),
+                        purchase.getFoodUrl()))
+            );
+            OrderOutputDto orderOutput = new OrderOutputDto(order.getDate(),order.getTotal(),purchasesOutput);
+            output.add(orderOutput);
+        });
+
+        return output;
     }
 
 }

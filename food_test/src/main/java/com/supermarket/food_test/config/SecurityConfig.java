@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/auth/order").hasRole("USER"))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.PUT,"/auth").authenticated())
                 .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.DELETE,"/auth").hasRole("ADMIN"))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/auth/users/**").hasRole("ADMIN"))
+                .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET,"/auth/users/**").authenticated())
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/auth/users").hasRole("ADMIN"))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.GET,"/food").permitAll())
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/images/**").permitAll())

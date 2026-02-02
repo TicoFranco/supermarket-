@@ -1,6 +1,6 @@
 package com.supermarket.food_test.controllers;
 
-import com.supermarket.food_test.dtos.FoodDTO;
+import com.supermarket.food_test.dtos.input.FoodDto;
 import com.supermarket.food_test.models.Food;
 import com.supermarket.food_test.services.FoodService;
 import jakarta.validation.Valid;
@@ -32,7 +32,7 @@ public class FoodController {
     }
 
     @PostMapping
-    public ResponseEntity postFood(@RequestBody @Valid FoodDTO foodDTO){
+    public ResponseEntity postFood(@RequestBody @Valid FoodDto foodDTO){
         Food food = service.postFood(foodDTO);
         if(food != null){
             return ResponseEntity.status(HttpStatus.CREATED).body(food);
@@ -42,7 +42,7 @@ public class FoodController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity putFood(@RequestBody @Valid FoodDTO foodDTO, @PathVariable Long id){
+    public ResponseEntity putFood(@RequestBody @Valid FoodDto foodDTO, @PathVariable Long id){
         Food food = service.putFood(foodDTO,id);
         if(food != null){
             return ResponseEntity.status(HttpStatus.OK).body(food);

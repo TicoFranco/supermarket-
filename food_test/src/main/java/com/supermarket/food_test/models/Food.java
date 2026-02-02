@@ -32,4 +32,13 @@ public class Food {
         return this.price;
     }
 
+    public String getName(){
+        return this.name;
+    }
+
+    public String getUrl(){
+        return this.url;
+    }
+
+
 }

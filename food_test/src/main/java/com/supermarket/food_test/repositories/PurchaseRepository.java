@@ -1,6 +1,6 @@
 package com.supermarket.food_test.repositories;
 
-import com.supermarket.food_test.models.Order;
+import com.supermarket.food_test.models.Purchase;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order,UUID> {
+public interface PurchaseRepository extends JpaRepository<Purchase, UUID> {
 
-    @Query(value = "select * from orders where user_id = :id",nativeQuery = true)
-    List<Order> ordersByUser(@Param("id") UUID id);
+    @Query(value = "select * from purchase where order_id = :id",nativeQuery = true)
+    List<Purchase> purchasesByOrder(@Param("id") UUID id);
 }

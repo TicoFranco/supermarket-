@@ -19,13 +19,8 @@ public class Order {
     @Column(nullable = false)
     private double total;
 
-    @ManyToMany
-    @JoinTable(
-            name = "order_food",
-            joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "food_id")
-    )
-    private Set<Food> items;
+    @OneToMany(mappedBy = "order",cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Purchase> items;
 
     @ManyToOne
     @JoinColumn(name = "user_id",nullable = false)
@@ -34,12 +29,38 @@ public class Order {
     @DateTimeFormat(pattern = "dd/MM/yyyy kk:mm")
     private Date createdAt;
 
-    public Order(Set<Food> items,User user,Date time){
+    public Order(Set<Purchase> items,User user,Date time){
         this.items = items;
-        this.total = items.stream().mapToDouble(Food::getPrice).sum();
+        this.total = items.stream().mapToDouble(Purchase::getValue).sum();
+        this.user = user;
+        this.createdAt = time;
+    }
+
+    public Order(User user,Date time){
         this.user = user;
         this.createdAt = time;
     }
 
     public Order(){}
+
+    public void setTotal(double total){
+        this.total = total;
+    }
+
+    public void setItems(Set<Purchase> items){
+        this.items = items;
+        this.total = items.stream().mapToDouble(Purchase::getValue).sum();
+    }
+
+    public UUID getId(){
+        return this.id;
+    }
+
+    public Date getDate(){
+        return this.createdAt;
+    }
+
+    public Double getTotal(){
+        return this.total;
+    }
 }
